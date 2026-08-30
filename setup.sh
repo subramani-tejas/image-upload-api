@@ -74,6 +74,17 @@ awslocal lambda create-function \
     --environment "Variables={TABLE_NAME=$TABLE_NAME, BUCKET_NAME=$BUCKET_NAME}" \
     --region "$REGION" 2>/dev/null || awslocal lambda update-function-code --function-name ViewImage --zip-file fileb:///tmp/view_image.zip
 
+zip -q -r /tmp/delete_image.zip delete_image.py
+
+awslocal lambda create-function \
+    --function-name DeleteImage \
+    --runtime python3.9 \
+    --handler delete_image.lambda_handler \
+    --role arn:aws:iam::000000000000:role/lambda-role \
+    --zip-file fileb:///tmp/delete_image.zip \
+    --environment "Variables={TABLE_NAME=$TABLE_NAME, BUCKET_NAME=$BUCKET_NAME}" \
+    --region "$REGION" 2>/dev/null || awslocal lambda update-function-code --function-name DeleteImage --zip-file fileb:///tmp/delete_image.zip
+
 echo "===== Setting up S3 Event Notification =====tjs"
 PROCESSOR_LAMBDA_ARN=$(awslocal lambda get-function --function-name S3MetadataProcessor --query 'Configuration.FunctionArn' --output text)
 
@@ -171,6 +182,23 @@ awslocal apigateway put-integration \
     --type AWS_PROXY \
     --integration-http-method POST \
     --uri "arn:aws:apigateway:$REGION:lambda:path/2015-03-31/functions/$VIEW_LAMBDA_ARN/invocations"
+
+# DELETE on /users/{user_id}/images/{image_id}
+awslocal apigateway put-method \
+    --rest-api-id "$API_ID" \
+    --resource-id "$IMAGE_ID_RES_ID" \
+    --http-method DELETE \
+    --authorization-type NONE
+
+DELETE_LAMBDA_ARN=$(awslocal lambda get-function --function-name DeleteImage --query 'Configuration.FunctionArn' --output text)
+
+awslocal apigateway put-integration \
+    --rest-api-id "$API_ID" \
+    --resource-id "$IMAGE_ID_RES_ID" \
+    --http-method DELETE \
+    --type AWS_PROXY \
+    --integration-http-method POST \
+    --uri "arn:aws:apigateway:$REGION:lambda:path/2015-03-31/functions/$DELETE_LAMBDA_ARN/invocations"
 
 awslocal apigateway create-deployment --rest-api-id "$API_ID" --stage-name "$STAGE"
 
