@@ -37,7 +37,7 @@ def mock_infrastructure():
 def populated_infrastructure(mock_infrastructure):
     dynamodb, table, s3 = mock_infrastructure
     
-    s3_key = "users/usr_123/images/test_image_1.jpg"
+    s3_key = "users/usr_123/images/img888-sunset.jpg"
     s3.put_object(Bucket=os.environ['BUCKET_NAME'], Key=s3_key, Body=b"fake-image-bytes")
     
     table.put_item(Item={
