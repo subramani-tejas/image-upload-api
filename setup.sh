@@ -52,6 +52,17 @@ awslocal lambda create-function \
     --environment "Variables={TABLE_NAME=$TABLE_NAME}" \
     --region "$REGION" 2>/dev/null || awslocal lambda update-function-code --function-name S3MetadataProcessor --zip-file fileb:///tmp/s3_metadata_processor.zip
 
+zip -q -r /tmp/list_images.zip list_images.py
+
+awslocal lambda create-function \
+    --function-name ListImages \
+    --runtime python3.9 \
+    --handler list_images.lambda_handler \
+    --role arn:aws:iam::000000000000:role/lambda-role \
+    --zip-file fileb:///tmp/list_images.zip \
+    --environment "Variables={TABLE_NAME=$TABLE_NAME}" \
+    --region "$REGION" 2>/dev/null || awslocal lambda update-function-code --function-name ListImages --zip-file fileb:///tmp/list_images.zip
+
 echo "===== Setting up S3 Event Notification =====tjs"
 PROCESSOR_LAMBDA_ARN=$(awslocal lambda get-function --function-name S3MetadataProcessor --query 'Configuration.FunctionArn' --output text)
 
@@ -107,6 +118,24 @@ awslocal apigateway put-integration \
     --type AWS_PROXY \
     --integration-http-method POST \
     --uri "arn:aws:apigateway:$REGION:lambda:path/2015-03-31/functions/$LAMBDA_ARN/invocations"
+
+# GET on /users/{user_id}/images
+awslocal apigateway put-method \
+    --rest-api-id "$API_ID" \
+    --resource-id "$IMAGES_RES_ID" \
+    --http-method GET \
+    --authorization-type NONE
+
+# integrate with ListImages
+LIST_LAMBDA_ARN=$(awslocal lambda get-function --function-name ListImages --query 'Configuration.FunctionArn' --output text)
+
+awslocal apigateway put-integration \
+    --rest-api-id "$API_ID" \
+    --resource-id "$IMAGES_RES_ID" \
+    --http-method GET \
+    --type AWS_PROXY \
+    --integration-http-method POST \
+    --uri "arn:aws:apigateway:$REGION:lambda:path/2015-03-31/functions/$LIST_LAMBDA_ARN/invocations"
 
 awslocal apigateway create-deployment --rest-api-id "$API_ID" --stage-name "$STAGE"
 
