@@ -6,6 +6,7 @@ A highly scalable, multi-tenant serverless service layer for concurrent image up
 * [Architecture](#architecture)
 * [Prerequisites](#prerequisites)
 * [Setup & Deployment](#setup--deployment)
+* [Testing Instructions](#testing-instructions)
 * [API Reference](#api-reference)
     * [1. Generate Upload URL](#1-generate-upload-url)
     * [2. List Images](#2-list-images)
@@ -48,6 +49,16 @@ This service uses a fully decoupled, event-driven serverless architecture:
     export API_ID="<your_api_id>"
     export BASE_URL="http://localhost:4566/restapis/$API_ID/local/_user_request_/users"
     ```
+
+## Testing Instructions
+The unit test suite runs in an isolated Docker container, ensuring zero local dependencies (like `pytest` or `moto`) are required.
+
+Steps:
+**Steps:**
+```bash
+chmod +x run_tests.sh
+./run_tests.sh
+```
 
 ## API Reference
 ### 1. Generate Upload URL
