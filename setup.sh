@@ -63,6 +63,17 @@ awslocal lambda create-function \
     --environment "Variables={TABLE_NAME=$TABLE_NAME}" \
     --region "$REGION" 2>/dev/null || awslocal lambda update-function-code --function-name ListImages --zip-file fileb:///tmp/list_images.zip
 
+zip -q -r /tmp/view_image.zip view_image.py
+
+awslocal lambda create-function \
+    --function-name ViewImage \
+    --runtime python3.9 \
+    --handler view_image.lambda_handler \
+    --role arn:aws:iam::000000000000:role/lambda-role \
+    --zip-file fileb:///tmp/view_image.zip \
+    --environment "Variables={TABLE_NAME=$TABLE_NAME, BUCKET_NAME=$BUCKET_NAME}" \
+    --region "$REGION" 2>/dev/null || awslocal lambda update-function-code --function-name ViewImage --zip-file fileb:///tmp/view_image.zip
+
 echo "===== Setting up S3 Event Notification =====tjs"
 PROCESSOR_LAMBDA_ARN=$(awslocal lambda get-function --function-name S3MetadataProcessor --query 'Configuration.FunctionArn' --output text)
 
@@ -136,6 +147,30 @@ awslocal apigateway put-integration \
     --type AWS_PROXY \
     --integration-http-method POST \
     --uri "arn:aws:apigateway:$REGION:lambda:path/2015-03-31/functions/$LIST_LAMBDA_ARN/invocations"
+
+# /users/{user_id}/images/{image_id}
+IMAGE_ID_RES_ID=$(awslocal apigateway create-resource \
+    --rest-api-id "$API_ID" \
+    --parent-id "$IMAGES_RES_ID" \
+    --path-part "{image_id}" \
+    --query 'id' --output text)
+
+# GET on /users/{user_id}/images/{image_id}
+awslocal apigateway put-method \
+    --rest-api-id "$API_ID" \
+    --resource-id "$IMAGE_ID_RES_ID" \
+    --http-method GET \
+    --authorization-type NONE
+
+VIEW_LAMBDA_ARN=$(awslocal lambda get-function --function-name ViewImage --query 'Configuration.FunctionArn' --output text)
+
+awslocal apigateway put-integration \
+    --rest-api-id "$API_ID" \
+    --resource-id "$IMAGE_ID_RES_ID" \
+    --http-method GET \
+    --type AWS_PROXY \
+    --integration-http-method POST \
+    --uri "arn:aws:apigateway:$REGION:lambda:path/2015-03-31/functions/$VIEW_LAMBDA_ARN/invocations"
 
 awslocal apigateway create-deployment --rest-api-id "$API_ID" --stage-name "$STAGE"
 
