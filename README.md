@@ -32,6 +32,46 @@ This service uses a fully decoupled, event-driven serverless architecture:
 *   **Amazon DynamoDB**: NoSQL database for metadata. Uses a single-table design partitioned by user.
 *   **Event-Driven Processing**: S3 `ObjectCreated` events trigger an asynchronous Lambda function to extract object metadata and write to DynamoDB, decoupling the user upload path from database writes.
 
+```mermaid
+graph TD
+    Client([Client Application])
+    API[API Gateway]
+
+    Lambda_Upload[Lambda: GenerateUploadUrl]
+    Lambda_List[Lambda: ListImages]
+    Lambda_View[Lambda: ViewImage]
+    Lambda_Delete[Lambda: DeleteImage]
+    Lambda_Process[Lambda: S3MetadataProcessor]
+
+    S3[(Amazon S3)]
+    DDB[(Amazon DynamoDB)]
+
+    Client -- POST /upload-url --> API
+    Client -- GET /images --> API
+    Client -- GET /images/{id} --> API
+    Client -- DELETE /images/{id} --> API
+    
+    Client -- "Upload/Download Binary" --> S3
+
+    API --> Lambda_Upload
+    API --> Lambda_List
+    API --> Lambda_View
+    API --> Lambda_Delete
+
+    Lambda_Upload -. "Generate Presigned PUT" .-> S3
+    
+    S3 -- "s3:ObjectCreated Event" --> Lambda_Process
+    Lambda_Process -- "PutItem (Metadata)" --> DDB
+
+    Lambda_List -- "Query (Filters/Pagination)" --> DDB
+    
+    Lambda_View -- "Query (Get s3_key)" --> DDB
+    Lambda_View -. "Generate Presigned GET" .-> S3
+
+    Lambda_Delete -- "DeleteItem" --> DDB
+    Lambda_Delete -- "DeleteObject" --> S3
+```
+
 ## Prerequisites
 *   Docker & Docker Compose
 *   AWS CLI (configured with dummy credentials for LocalStack)
