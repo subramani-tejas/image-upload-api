@@ -1,0 +1,31 @@
+curl -X POST "http://localhost:4566/restapis/k5or0szcge/local/_user_request_/users/usr_9981/images/upload-url" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filename": "sunset.jpg",
+    "content_type": "image/jpeg",
+    "title": "Sunset in Bali",
+    "tags": [
+        "travel",
+        "vacation"
+    ]
+}'
+
+
+
+curl -i -X PUT 'http://localhost:4566/user-images-local/users/usr_9981/images/273a4935-a807-465f-839d-50df0f0e112d-sunset.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=LSIAQAAAAAAAFTKKSWXU%2F20260901%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260901T204155Z&X-Amz-Expires=300&X-Amz-SignedHeaders=content-type%3Bhost%3Bx-amz-meta-tags%3Bx-amz-meta-title&X-Amz-Security-Token=FQoGZXIvYXdzEYZXHRJhZTL3kxSHPnft1MRG8iE0QHWzNG%3Daq%2BETfkZ3jRLp3gHoNI%3DsKlply1cp3FmqCmHhU7%2BvslaYMSuG%2FKvKycQwubtWg%2FRBSx%3DAFRPVAVRvMv3%2FLefqtUb%3Dxg5LhRskcIyQ1ffwK%2FdxpuLEfCMt2SE4gPMBhnRCx3tcLirl7TBTE0%2F1UixbLNiMbOYqAFYlpSR223fdD9gBEuoIo8S%2FX0a9HmleFN0Pt%3DC1Nh3uFWSr6RC%3DGfcnQNqCLA7hOQ7FI8jokGAd%3DyX40fstu7SavBr%2FFceidzbufuENS0AIaL%2BZUWNWiMTF%2F%2FVWxdVk8P7cg2akf36LFIr7W7H2Ci6C&X-Amz-Signature=f43704da0b391a18569b4611a90dc567c15815e3835320a624c5b7b5af20258e' \
+  -H "Content-Type: image/jpeg" \
+  -H "x-amz-meta-title: Sunset in Bali" \
+  -H 'x-amz-meta-tags: ["travel", "vacation"]' \
+  --data-binary @test_image_1.jpg
+
+
+aws --endpoint-url=http://localhost:4566 dynamodb scan --table-name ImageMetadata
+
+
+curl -i -X GET "http://localhost:4566/restapis/k5or0szcge/local/_user_request_/users/usr_9981/images" \
+  -H "Content-Type: application/json"
+
+
+curl -i -X GET "http://localhost:4566/restapis/k5or0szcge/local/_user_request_/users/usr_9981/images/273a4935"
+
+curl -i -X DELETE "http://localhost:4566/restapis/k5or0szcge/local/_user_request_/users/usr_9981/images/273a4935"

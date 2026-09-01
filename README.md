@@ -119,7 +119,7 @@ Request Body:
 #### SAMPLE REQUEST [1/2]
 Request for the S3 presigned upload URL.
 ```json
-curl -i -X POST "http://localhost:4566/restapis/hblhifbisw/local/_user_request_/users/usr_9981/images/upload-url" \
+curl -i -X POST "http://localhost:4566/restapis/hesrgxqhat/local/_user_request_/users/usr_9981/images/upload-url" \
   -H "Content-Type: application/json" \
   -d '{
     "filename": "sunset.jpg",
@@ -149,7 +149,7 @@ curl -i -X POST "http://localhost:4566/restapis/hblhifbisw/local/_user_request_/
 #### SAMPLE REQUEST [2/2]
 Upload image to the presigned URL.
 ```json
-curl -i -X PUT 'UPLOAD_URL' \
+curl -i -X PUT 'http://localhost:4566/user-images-local/users/usr_9981/images/e64549b9-687d-4bef-934d-76e14af3ebad-sunset.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=LSIAQAAAAAAAFTYTB4XV%2F20260901%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260901T172926Z&X-Amz-Expires=300&X-Amz-SignedHeaders=content-type%3Bhost%3Bx-amz-meta-tags%3Bx-amz-meta-title&X-Amz-Security-Token=FQoGZXIvYXdzEjCpYmaZhrcQSYvG%2Bb9RHSSYJFIsy6Kc%2FPW%3Dpbt39m8m1FaWphwowxG7KsmZu9xkCBgjdqLXJKt8lK1cg6nrsyJGVpwiyq76p%3DLpPK6EKaPY2fptHuxt5DF%2BPHMIwLrDlIxL1WbQe08yTZAwr81HhGU3Bn3YPJm5w%2F%3D0KCLHSV5o%3DLfleblnVW5E8R%2FC4oGR7jDQ5BFzj%2FeV22qpbQThZ5me8sOOuFkohvf9U%3DjHWqdfwKG0YUjEGladxIEcqxxuikuVz1WYto%2Bn1ZKGofGT79segTcNXnTtQ96xpkCZXbIyniAmxyKHDQugKZCxtMPC3xBqUjKceue9RuBr89cGanHL&X-Amz-Signature=74507fd2499c52dbab93ac5d9f4ecfad523015068692265a888201cd2a9f5311' \
   -H "Content-Type: image/jpeg" \
   -H "x-amz-meta-title: Sunset in Bali" \
   -H 'x-amz-meta-tags: ["travel", "vacation"]' \
@@ -178,7 +178,7 @@ Query Parameters:
 
 #### SAMPLE REQUEST
 ```json
-curl -i -X GET "http://localhost:4566/restapis/hblhifbisw/local/_user_request_/users/usr_9981/images" \
+curl -i -X GET "http://localhost:4566/restapis/hesrgxqhat/local/_user_request_/users/usr_9981/images" \
   -H "Content-Type: application/json"
 ```
 
@@ -210,7 +210,7 @@ Generates a pre-signed GET URL for direct, secure S3 download.
 
 #### SAMPLE REQUEST
 ```json
-curl -i -X GET "http://localhost:4566/restapis/hblhifbisw/local/_user_request_/users/usr_9981/images/7bf695fd"
+curl -i -X GET "http://localhost:4566/restapis/hesrgxqhat/local/_user_request_/users/usr_9981/images/e64549b9"
 ```
 
 #### SAMPLE RESPONSE
@@ -231,7 +231,7 @@ Permanently removes the image binary and its associated metadata.
 
 #### SAMPLE REQUEST
 ```json
-curl -i -X DELETE "http://localhost:4566/restapis/hblhifbisw/local/_user_request_/users/usr_9981/images/7bf695fd"
+curl -i -X DELETE "http://localhost:4566/restapis/hesrgxqhat/local/_user_request_/users/usr_9981/images/e64549b9"
 ```
 
 #### SAMPLE RESPONSE
