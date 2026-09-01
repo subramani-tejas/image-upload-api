@@ -13,6 +13,15 @@ else
     awslocal s3 mb "s3://$BUCKET_NAME" --region "$REGION"
 fi
 
+awslocal s3api put-bucket-cors --bucket "$BUCKET_NAME" --cors-configuration '{
+  "CORSRules": [{
+      "AllowedHeaders": ["*"],
+      "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+      "AllowedOrigins": ["*"],
+      "ExposeHeaders": ["ETag"]
+  }]
+}'
+
 if awslocal dynamodb describe-table --table-name "$TABLE_NAME" 2>/dev/null; then
     echo "Table $TABLE_NAME already exists."
 else
