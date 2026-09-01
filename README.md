@@ -286,3 +286,22 @@ Bypassing this ensures the reviewer can spin up the environment friction-free wi
 1. **Observability:** Replace standard ` print() ` statements with structured JSON logging using AWS Lambda Powertools.
 
 2. **DRY Code:** Refactor repetitive HTTP dictionary returns into a centralized ` _build_response() ` utility method.
+
+3. **Idempotency Handling:**
+
+S3's delete_object returns a 200 OK even if the object does not exist. However, if a client double-clicks the delete button, the second request will fail at the initial table.query lookup (returning a 404). Return a consistent 200 OK for idempotent delete retries.
+
+4. **DynamoDB Pagination Flaw:**
+
+Applied Limit in the same query as FilterExpression. In DynamoDB, the limit is applied to the data read before the filter is evaluated. If a user sets a limit of 50, DynamoDB reads 50 items and filters out 49, returning only 1 item to the client along with a next_token. Clients might perceive this as a broken API returning unpredictable page sizes.
+
+5. **Unhandled Type Exceptions:**
+
+Cast the limit parameter directly using `int(query_params.get('limit', 50))`. If a user passes a non-numeric string like `?limit=abc`, Python will throw a ValueError, resulting in a 500 Internal Server Error instead of a 400 Bad Request.
+
+6. **Date Format Assumptions:**
+
+The sort key condition relies on lexicographical sorting for start_date and end_date. Because I do not validate or enforce ISO8601 formatting on the input dates, invalid date strings will result in silent logical errors and return incorrect data sets.
+
+7. **Leaking Database Internals:**
+I serialize the raw DynamoDB LastEvaluatedKey directly to JSON and send it to the client as next_token. This couples the client to internal database schema.
