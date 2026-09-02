@@ -1,0 +1,99 @@
+http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images/upload-url
+
+echo "fake bytes for image 1" > sunrise_bali.jpg
+echo "fake bytes for image 2" > sunset_hawaii.jpg
+echo "fake bytes for image 3" > city_skyline.jpg
+echo "fake bytes for image 4" > home_sunset.jpg
+
+# POST 1: Matches tag "travel", different title
+curl -X POST "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images/upload-url" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filename": "sunrise_bali.jpg",
+    "content_type": "image/jpeg",
+    "title": "Sunrise in Bali",
+    "tags": ["travel", "morning"]
+}'
+
+# POST 1 upload
+curl -i -X PUT '' \
+  -H "Content-Type: image/jpeg" \
+  -H "x-amz-meta-title: Sunrise in Bali" \
+  -H 'x-amz-meta-tags: ["travel", "morning"]' \
+  --data-binary @sunrise_bali.jpg
+
+# POST 2: Matches both "travel" tag and "sunset" title
+curl -X POST "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images/upload-url" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filename": "sunset_hawaii.jpg",
+    "content_type": "image/jpeg",
+    "title": "Sunset in Hawaii",
+    "tags": ["travel", "vacation"]
+}'
+
+# Upload Image 2
+curl -i -X PUT 'http://localhost:4566/user-images-local/users/usr_9981/images/a21bd31e-f277-4c4b-ac6f-9388fbe4259e-sunset_hawaii.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=LSIAQAAAAAAAEVPWRDIQ%2F20260902%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260902T090416Z&X-Amz-Expires=300&X-Amz-SignedHeaders=content-type%3Bhost%3Bx-amz-meta-tags%3Bx-amz-meta-title&X-Amz-Security-Token=FQoGZXIvYXdzEBYaDVIrqgVRfb5PKKUulrY%2BU58X4DBu1j2oRBCWxQ382CJAi96dyfLqsH6yom3PebXFrP6q5Qkxs9X725YthRSZUz%2Frh2VY1cOCWa%2BqyudycQr0b%2BwHiTQ2ONgGTaRtLwULz%2FcgHwt6hyGy3euLdea2GMTX5xmR6Hq0oqVWdXa84Fyb6fYhu9c%2BJaP0Lq12k7mjon%2Fjo3cU3%2FXW8JDJfZ%2BvuMJToPYXC%2Fvl7e7pM2YmpFqJa4WejKR4E2iKYt%2F3l4rugp%2B8KJOrWFTVoMsZWxnnT4HWiTpUh5toWbRNvpiC9yE3mZ%2BNpDw98tkNvyCzMpasEe4cWz3N%2Bv1moRUnMz0%3D&X-Amz-Signature=2c495a0a14e08ecced9230cd66a287910dae5ba25d11f08b0d45f9b43a9c093e' \
+  -H "Content-Type: image/jpeg" \
+  -H "x-amz-meta-title: Sunset in Hawaii" \
+  -H 'x-amz-meta-tags: ["travel", "vacation"]' \
+  --data-binary @sunset_hawaii.jpg
+
+# POST 3: Matches "travel" tag, completely different title
+curl -X POST "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images/upload-url" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filename": "city_skyline.jpg",
+    "content_type": "image/jpeg",
+    "title": "City Skyline Tokyo",
+    "tags": ["travel", "urban"]
+}'
+
+# Upload Image 3
+curl -i -X PUT 'http://localhost:4566/user-images-local/users/usr_9981/images/c2e4216b-4c3e-4a54-a64c-730350cfccdc-city_skyline.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=LSIAQAAAAAAAEVPWRDIQ%2F20260902%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260902T090442Z&X-Amz-Expires=300&X-Amz-SignedHeaders=content-type%3Bhost%3Bx-amz-meta-tags%3Bx-amz-meta-title&X-Amz-Security-Token=FQoGZXIvYXdzEBYaDVIrqgVRfb5PKKUulrY%2BU58X4DBu1j2oRBCWxQ382CJAi96dyfLqsH6yom3PebXFrP6q5Qkxs9X725YthRSZUz%2Frh2VY1cOCWa%2BqyudycQr0b%2BwHiTQ2ONgGTaRtLwULz%2FcgHwt6hyGy3euLdea2GMTX5xmR6Hq0oqVWdXa84Fyb6fYhu9c%2BJaP0Lq12k7mjon%2Fjo3cU3%2FXW8JDJfZ%2BvuMJToPYXC%2Fvl7e7pM2YmpFqJa4WejKR4E2iKYt%2F3l4rugp%2B8KJOrWFTVoMsZWxnnT4HWiTpUh5toWbRNvpiC9yE3mZ%2BNpDw98tkNvyCzMpasEe4cWz3N%2Bv1moRUnMz0%3D&X-Amz-Signature=b1cec94c3d64844849416dc5e32e8d890c7a37b7de6854275587f171d24d3ed6' \
+  -H "Content-Type: image/jpeg" \
+  -H "x-amz-meta-title: City Skyline Tokyo" \
+  -H 'x-amz-meta-tags: ["travel", "urban"]' \
+  --data-binary @city_skyline.jpg
+
+
+# POST 4: Matches "sunset" title, completely different tag
+curl -X POST "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images/upload-url" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filename": "home_sunset.jpg",
+    "content_type": "image/jpeg",
+    "title": "Sunset at Home",
+    "tags": ["home", "staycation"]
+}'
+
+# Upload Image 4
+curl -i -X PUT 'http://localhost:4566/user-images-local/users/usr_9981/images/15f7a448-a0a3-4776-81de-c02c7ead8615-home_sunset.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=LSIAQAAAAAAAEVPWRDIQ%2F20260902%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260902T090643Z&X-Amz-Expires=300&X-Amz-SignedHeaders=content-type%3Bhost%3Bx-amz-meta-tags%3Bx-amz-meta-title&X-Amz-Security-Token=FQoGZXIvYXdzEBYaDVIrqgVRfb5PKKUulrY%2BU58X4DBu1j2oRBCWxQ382CJAi96dyfLqsH6yom3PebXFrP6q5Qkxs9X725YthRSZUz%2Frh2VY1cOCWa%2BqyudycQr0b%2BwHiTQ2ONgGTaRtLwULz%2FcgHwt6hyGy3euLdea2GMTX5xmR6Hq0oqVWdXa84Fyb6fYhu9c%2BJaP0Lq12k7mjon%2Fjo3cU3%2FXW8JDJfZ%2BvuMJToPYXC%2Fvl7e7pM2YmpFqJa4WejKR4E2iKYt%2F3l4rugp%2B8KJOrWFTVoMsZWxnnT4HWiTpUh5toWbRNvpiC9yE3mZ%2BNpDw98tkNvyCzMpasEe4cWz3N%2Bv1moRUnMz0%3D&X-Amz-Signature=10670adccc11e9d63d88732536208161af42b49e49c1696921ae38cca533bf02' \
+  -H "Content-Type: image/jpeg" \
+  -H "x-amz-meta-title: Sunset at Home" \
+  -H 'x-amz-meta-tags: ["home", "staycation"]' \
+  --data-binary @home_sunset.jpg
+
+
+
+
+
+
+
+
+
+# tag only -- should return 0 + 1, 2, 3
+curl -i -X GET "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images?tag=travel" \
+  -H "Content-Type: application/json"
+
+# title only - should return 0 + 2, 4
+curl -i -X GET "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images?title=Sunset" \
+  -H "Content-Type: application/json"
+
+# tag and title - Should return 0 + 2
+curl -i -X GET "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images?tag=travel&title=Sunset" \
+  -H "Content-Type: application/json"
+
+# nothing common -- should return [] or 404
+curl -i -X GET "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images?tag=urban&title=Sunset" \
+  -H "Content-Type: application/json"

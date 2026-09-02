@@ -219,3 +219,4 @@ __marimo__/
 src/terraform/.terraform.lock.hcl
 src/terraform/.terraform
 src/terraform/terraform.tfstate
+src/terraform/terraform.tfstate.backup
