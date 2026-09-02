@@ -5,9 +5,9 @@ services:
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=s3,dynamodb,lambda,apigateway
+      - SERVICES=s3,dynamodb,lambda,apigateway,iam
       - AWS_DEFAULT_REGION=us-east-1
+      - LOCALSTACK_AUTH_TOKEN=test
     volumes:
-      - "${PWD}/setup.sh:/etc/localstack/init/ready.d/setup.sh"
       - "${PWD}/src:/tmp/src"
       - /var/run/docker.sock:/var/run/docker.sock

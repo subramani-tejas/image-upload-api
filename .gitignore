@@ -214,5 +214,9 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# Streamlit
-.streamlit/secrets.toml
+.vscode/settings.json
+.DS_Store
+src/terraform/.terraform.lock.hcl
+src/terraform/.terraform
+src/terraform/terraform.tfstate
+src/terraform/terraform.tfstate.backup
