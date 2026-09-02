@@ -22,6 +22,7 @@ A highly scalable, multi-tenant serverless service layer for concurrent image up
     * [2. Imperative Setup vs. IaC](#2-imperative-setup-vs-iac)
     * [3. LocalStack Versioning](#3-localstack-versioning)
 * [Future Enhancements (TODOs)](#future-enhancements-todos)
+* [Architecture choices & Defence](#architecture-choices--defence)
 
 ## Architecture
 
@@ -283,25 +284,105 @@ Bypassing this ensures the reviewer can spin up the environment friction-free wi
 
 
 ## Future Enhancements (TODOs)
-1. **Observability:** Replace standard ` print() ` statements with structured JSON logging using AWS Lambda Powertools.
+**Observability:** Replace standard ` print() ` statements with structured JSON logging using AWS Lambda Powertools.
 
-2. **DRY Code:** Refactor repetitive HTTP dictionary returns into a centralized ` _build_response() ` utility method.
+**DRY Code:** Refactor repetitive HTTP dictionary returns into a centralized ` _build_response() ` utility method.
 
-3. **Idempotency Handling:**
+**Idempotency Handling:**
 
 S3's delete_object returns a 200 OK even if the object does not exist. However, if a client double-clicks the delete button, the second request will fail at the initial table.query lookup (returning a 404). Return a consistent 200 OK for idempotent delete retries.
 
-4. **DynamoDB Pagination Flaw:**
+**DynamoDB Pagination Flaw:**
 
 Applied Limit in the same query as FilterExpression. In DynamoDB, the limit is applied to the data read before the filter is evaluated. If a user sets a limit of 50, DynamoDB reads 50 items and filters out 49, returning only 1 item to the client along with a next_token. Clients might perceive this as a broken API returning unpredictable page sizes.
 
-5. **Unhandled Type Exceptions:**
+**Unhandled Type Exceptions:**
 
 Cast the limit parameter directly using `int(query_params.get('limit', 50))`. If a user passes a non-numeric string like `?limit=abc`, Python will throw a ValueError, resulting in a 500 Internal Server Error instead of a 400 Bad Request.
 
-6. **Date Format Assumptions:**
+**Date Format Assumptions:**
 
 The sort key condition relies on lexicographical sorting for start_date and end_date. Because I do not validate or enforce ISO8601 formatting on the input dates, invalid date strings will result in silent logical errors and return incorrect data sets.
 
-7. **Leaking Database Internals:**
+**Leaking Database Internals:**
+
 I serialize the raw DynamoDB LastEvaluatedKey directly to JSON and send it to the client as next_token. This couples the client to internal database schema.
+
+## Architecture choices & Defence
+
+### API Doc
+
+API Gateway can only export what it knows. Because the Terraform setup creates raw proxy integrations (`AWS_PROXY`) without defining explicit request models, query parameters, or response schemas, the exported specification will be a skeleton containing paths and HTTP methods, but lacking payload structures and type contracts.
+
+You won't get complete documentation because I didn't define `Models`.
+
+In API Gateway, a Model is a JSON Schema that defines the exact structure, properties, and data types of the incoming request bodies and outgoing responses. Have to explicitly attach these Models to your Method Requests and Method Responses. When you trigger an export, API Gateway reads those Models to generate the OpenAPI payload definitions.
+
+Because AWS_PROXY is designed as a blind passthrough to hand the raw HTTP request directly to Lambda, I'm not forced to define Models to make the API work. Since my scripts skip creating and attaching them, API Gateway simply has no schema data to export.
+
+
+### Why Presigned URLs Over Passing Binaries Through API Gateway?
+API Gateway enforces 10MB payload size limit and charges per request and data transfer.
+
+Passing binary data through API-gw forces base64 encoding (increasing payload size by ~33%), consumes Lambda RAM, and keeps execution threads waiting on I/O.
+
+Presigned URLs bypass compute bottlenecks entirely, letting S3 handle edge upload concurrency.
+
+
+### Handling Eventual Consistency & Race Conditions
+If a client uploads an image to S3 and immediately requests GET /users/{user_id}/images, the S3 event notification might still be in flight. The user won't see their uploaded image right away.
+
+In a prod build, I write a PENDING metadata record to DynamoDB when generating the upload URL. When S3 fires the ObjectCreated event, the processor updates the state to READY. If the event never arrives within TTL, a background sweep marks it FAILED."
+
+Generating a pre-signed URL does not guarantee the user will actually upload the file. By creating a PENDING database record first, you can implement a background TTL (Time-To-Live) process to delete abandoned database entries and clean up the system.
+
+
+### Direct S3 -> Lambda vs. S3 -> SQS -> Lambda
+Direct invocation uses async L execution. If Lambda concurrency hits account limits, S3 retries twice and drops the event silently unless a Lambda DLQ is explicitly configured.
+
+Placing an SQS queue between S3 and Lambda decouples burst traffic, provides automatic backpressure, and guarantees retries with dead-lettering.
+
+
+### Client-Side Contract: 
+
+Correctly returns required_headers to the client. This is a critical detail: pre-signed URLs using s3v4 signatures will reject the upload if the client's HTTP request headers do not exactly match the parameters used to generate the URL.
+
+
+### Idempotency in Distributed Systems: 
+
+S3 event notifications provide "at-least-once" delivery guarantees. Since `put_item` completely overwrites existing items, processing the exact same S3 event twice is currently safe. As business logic grows, I would transition to update_item with condition expressions to ensure true idempotency.
+
+
+### Scalable Search vs. Filter Expressions: 
+
+The prompt requires supporting two search filters. With current table schema `(PK=USER#{user_id})`, searching by tags or title requires a DynamoDB FilterExpression. 
+
+Acknowledging that while this works for a small user gallery, it does not scale for thousands of images because DynamoDB still charges Read Capacity Units (RCUs) for the entire partition before applying the filter. 
+
+Experiment with an inverted index (GSI) pattern for tags or an integration with OpenSearch for a true production environment.
+
+
+### DynamoDB Primary Key Collision: 
+
+Defining the Sort Key (SK) strictly as `IMAGE#{upload_date}` introduced a high risk of data loss. S3 LastModified timestamps can share the same resolution if a user uploads multiple files concurrently. 
+
+This will cause put_item to silently overwrite existing records. Need to append the unique identifier to the SK (e.g., `IMAGE#{upload_date}#{image_id}`).
+
+
+### Abstracting Pagination Tokens: 
+
+Base64-encode the pagination token before sending it to the client. This hides the internal database keys and allows to change primary key schema later without breaking client contracts.
+
+
+### O(N) Database Query:
+For a user with 5,000 images, this consumes excessive Read Capacity Units (RCUs) and 
+introduces severe latency just to load or delete one picture.
+
+
+### Distributed State Inconsistency: 
+
+I execute the S3 delete_object network call immediately before the DynamoDB delete_item call. 
+If the database deletion fails due to throttling or a network timeout, the system is left in an 
+unrecoverable, corrupted state: the database record exists, but the underlying binary is gone.
+
+Use DELETED flag -> async cleanup as well

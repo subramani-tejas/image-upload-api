@@ -97,3 +97,8 @@ curl -i -X GET "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/u
 # nothing common -- should return [] or 404
 curl -i -X GET "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images?tag=urban&title=Sunset" \
   -H "Content-Type: application/json"
+
+
+# limit test - error -- returns 4 but limit 2
+curl -i -X GET "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images?tag=travel&limit=2" \
+  -H "Content-Type: application/json"

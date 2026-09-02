@@ -1,0 +1,23 @@
+curl -X POST "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images/upload-url" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filename": "sunset.jpg",
+    "content_type": "image/jpeg",
+    "title": "senset test",
+    "tags": ["travel", "evening"]
+}'
+
+
+curl -i -X PUT 'http://localhost:4566/user-images-local/users/usr_9981/images/d789f4db-90f3-4aee-bb09-38cd5d2e12f3-sunset.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=LSIAQAAAAAAAGDI7OLNZ%2F20260902%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260902T105214Z&X-Amz-Expires=300&X-Amz-SignedHeaders=content-type%3Bhost%3Bx-amz-meta-tags%3Bx-amz-meta-title&X-Amz-Security-Token=FQoGZXIvYXdzEBYaDLYkoINubUyBCKhGnCFrvpMmVwx8A4WtRLzBLsT92YtIduU9M2e10w8FU24smU317B%2BqZtxnDh2tdZEoLdKVfBzyPG0vWimJ17MKamCLnCoN4gcbYfk%2FbsGvMC2btVg9SOHgkWCPGabGDZxoLh60OjAwf8bGDqVgEERoijq4ZRHBxBkvYYJB1Lz2FmeSws8FSBpfJjy3WvTD9qrUb3%2BzkjVbjfDJKsTctKyd7%2FsvjHj4MkhfmL0Ct8JVnC7MJeGm4tfI%2FLOx8uHwGGPXITz9oUTu3rxiBN%2BnblsBn1Pa2a%2FteQZYbYSHDN3%2BIhzvW67XihLWd7K%2BqG69WOBHiFk%3D&X-Amz-Signature=71781c14457e804d7e828ff206534c184a906ac0c0d7087bd81424978839e1c2' \
+  -H "Content-Type: image/jpeg" \
+  -H "x-amz-meta-title: sunset.jpg" \
+  -H 'x-amz-meta-tags: ["travel", "evening"]' \
+  --data-binary @test_image_1.jpg
+
+
+image id:
+d789f4db-90f3-4aee-bb09-38cd5d2e12f3
+
+
+curl -i -X GET "http://localhost:4566/restapis/nma23ixuou/local/_user_request_/users/usr_9981/images" \
+  -H "Content-Type: application/json"
